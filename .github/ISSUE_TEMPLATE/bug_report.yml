@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible problem with Audio Forge.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Audio Forge version
+      placeholder: '1.0.0'
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: macOS version and Mac architecture, or your source-run environment.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the input/output formats and codec if known. Avoid uploading private or copyrighted media.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include any error text and a screenshot when helpful.
+    validations:
+      required: true

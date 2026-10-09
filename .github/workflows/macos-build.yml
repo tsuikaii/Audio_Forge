@@ -1,0 +1,30 @@
+name: macOS package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install build tools
+        run: brew install python@3.14 pkgconf
+      - name: Build shared LGPL media tools
+        run: '"$(brew --prefix python@3.14)/bin/python3.14" -B scripts/build_media.py'
+      - name: Build and test native package
+        run: '"$(brew --prefix python@3.14)/bin/python3.14" -B build_gui_app.py'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Audio-Forge-macOS
+          path: |
+            dist/*.dmg
+            dist/*third-party-sources.tar.gz
+            dist/SHA256SUMS.txt
+          if-no-files-found: error

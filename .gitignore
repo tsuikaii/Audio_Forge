@@ -1,0 +1,43 @@
+# Build outputs and downloaded dependencies
+/build/
+/dist/
+*.app/
+*.dmg
+*.dmg.sha256
+
+# Python and editors
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+._*
+
+# Private configuration, local audio, and temporary outputs
+.env
+.env.*
+*.pem
+*.key
+*.mp4
+*.mp3
+*.flac
+*.m4a
+*.wav
+*.log
+*.partial
+.mp4_to_m4a-*
+
+# Other local projects sharing this development directory
+/MuseAmp/
+/personal-music/
+/ssh_known_hosts
+/.codex/
+/.agents/
