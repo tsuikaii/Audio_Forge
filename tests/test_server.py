@@ -4,8 +4,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-import m4a_gui as gui
-from test_mp4_to_m4a import checked, inspect, packet_hashes
+from audio_forge import server as gui
+from tests.helpers import checked, inspect, packet_hashes
 
 
 class GuiIntegrationTests(unittest.TestCase):

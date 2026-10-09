@@ -124,10 +124,10 @@ final class AudioForgeApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WK
     private func startBackend() {
         guard let resources = Bundle.main.resourceURL else { fail("Missing application resources."); return }
         let runtime = resources.appendingPathComponent("runtime")
-        let scripts = resources.appendingPathComponent("backend")
+        let backendDirectory = resources.appendingPathComponent("backend")
         let child = Process()
         child.executableURL = runtime.appendingPathComponent("bin/python3")
-        child.arguments = ["-B", "-s", "-S", "-u", scripts.appendingPathComponent("m4a_gui.py").path, "--desktop", "--parent-pid", String(ProcessInfo.processInfo.processIdentifier)]
+        child.arguments = ["-B", "-s", "-S", "-u", "-m", "audio_forge", "--desktop", "--parent-pid", String(ProcessInfo.processInfo.processIdentifier)]
         var environment = ProcessInfo.processInfo.environment.filter { !$0.key.hasPrefix("PYTHON") && !$0.key.hasPrefix("DYLD_") && $0.key != "__PYVENV_LAUNCHER__" }
         environment["PYTHONHOME"] = runtime.path
         environment["PYTHONNOUSERSITE"] = "1"
@@ -135,7 +135,7 @@ final class AudioForgeApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WK
         environment["PATH"] = runtime.appendingPathComponent("bin").path + ":/usr/bin:/bin:/usr/sbin:/sbin"
         environment["AUDIO_FORGE_DESKTOP"] = "1"
         child.environment = environment
-        child.currentDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
+        child.currentDirectoryURL = backendDirectory
         let output = Pipe(); child.standardOutput = output
         let errors = Pipe(); child.standardError = errors
         // Drain diagnostics so a large FFmpeg failure cannot block the subprocess.

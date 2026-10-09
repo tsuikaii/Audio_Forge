@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audio-forge"
+version = "1.0.0"
+description = "A local music converter with a Windows 98-inspired interface."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "tsuikaii" }]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/tsuikaii/Audio_Forge"
+Issues = "https://github.com/tsuikaii/Audio_Forge/issues"
+
+[project.scripts]
+audio-forge = "audio_forge.server:main"
+audio-forge-cli = "audio_forge.media:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+audio_forge = ["web/*"]

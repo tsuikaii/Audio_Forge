@@ -19,7 +19,7 @@ jobs:
       - name: Build shared LGPL media tools
         run: '"$(brew --prefix python@3.14)/bin/python3.14" -B scripts/build_media.py'
       - name: Build and test native package
-        run: '"$(brew --prefix python@3.14)/bin/python3.14" -B build_gui_app.py'
+        run: '"$(brew --prefix python@3.14)/bin/python3.14" -B scripts/build_app.py'
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Audio-Forge-macOS

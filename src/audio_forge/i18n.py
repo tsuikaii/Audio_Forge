@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 LANGUAGES = ("en", "zh-CN", "ja")
-TRANSLATIONS = json.loads(Path(__file__).with_name("locales.json").read_text(encoding="utf-8"))
+TRANSLATIONS = json.loads((Path(__file__).parent / "web/locales.json").read_text(encoding="utf-8"))
 
 
 def language(value):

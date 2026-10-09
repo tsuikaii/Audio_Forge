@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 
-from messages import LANGUAGES, UserError, error_message, translate
+from .i18n import LANGUAGES, UserError, error_message, translate
 
 
 TAGS = {

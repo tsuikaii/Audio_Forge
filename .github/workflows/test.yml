@@ -23,4 +23,4 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Run integration tests
-        run: python -B -m unittest -v test_mp4_to_m4a test_m4a_gui test_audio_formats test_localization test_desktop
+        run: make test PYTHON=python

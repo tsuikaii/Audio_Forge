@@ -1,7 +1,7 @@
 # Third-party notices
 
 Audio Forge's original source, pixel artwork, and documentation are licensed
-under the [MIT License](LICENSE). Bundled dependencies keep their own licenses;
+under the [MIT License](../LICENSE). Bundled dependencies keep their own licenses;
 the MIT license does not replace them.
 
 | Component | Release version | License | Source |
@@ -21,8 +21,8 @@ The exact FFmpeg and LAME source archives, verified SHA-256 checksums, configure
 options, and build recipe are available in
 [`Audio-Forge-1.0.0-third-party-sources.tar.gz`](https://github.com/tsuikaii/Audio_Forge/releases/download/v1.0.0/Audio-Forge-1.0.0-third-party-sources.tar.gz),
 alongside the installer. The recipe also lives in
-[`scripts/build_media.py`](scripts/build_media.py). See
-[`docs/BUILDING.md`](docs/BUILDING.md) for build instructions.
+[`scripts/build_media.py`](../scripts/build_media.py). See
+[`docs/BUILDING.md`](BUILDING.md) for build instructions.
 
 Original dependency license texts and the actual binary inventory are included
 inside `Audio Forge.app/Contents/Resources/ThirdParty`. CPython comes from the

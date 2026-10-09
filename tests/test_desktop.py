@@ -12,13 +12,11 @@ import unittest
 import urllib.error
 import urllib.request
 
-ROOT = Path(__file__).resolve().parent
-
 
 class DesktopServiceTests(unittest.TestCase):
     def start_service(self, parent=None):
         env = dict(os.environ, AUDIO_FORGE_DESKTOP="1", PYTHONDONTWRITEBYTECODE="1")
-        process = subprocess.Popen([sys.executable, "-B", "-s", "-S", str(ROOT / "m4a_gui.py"), "--desktop", "--parent-pid", str(parent if parent is not None else os.getpid())], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen([sys.executable, "-B", "-s", "-S", "-m", "audio_forge", "--desktop", "--parent-pid", str(parent if parent is not None else os.getpid())], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.addCleanup(self.stop_service, process)
         with selectors.DefaultSelector() as selector:
             selector.register(process.stdout, selectors.EVENT_READ)
@@ -53,7 +51,7 @@ class DesktopServiceTests(unittest.TestCase):
     def test_ready_protocol_private_assets_and_graceful_quit(self):
         process, event = self.start_service()
         self.assertEqual(self.request(event, "api/status")["state"], "idle")
-        self.assertIn(b"native-client", self.request(event, "ui.js"))
+        self.assertIn(b"native-client", self.request(event, "app.js"))
         with self.assertRaises(urllib.error.HTTPError) as context:
             self.request(event, "api/status", token=False)
         self.assertEqual(context.exception.code, 403)

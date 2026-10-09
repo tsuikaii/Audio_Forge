@@ -17,11 +17,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 import webbrowser
 
-import mp4_to_m4a as media
-from messages import error_data, language, translate
+from . import media
+from .i18n import error_data, language, translate
 
-ROOT = Path(__file__).resolve().parent
-BROWSE_ROOT = ROOT.parent.parent.parent if ROOT.parent.name == "Contents" and ROOT.parent.parent.suffix == ".app" else ROOT
+WEB = Path(__file__).resolve().parent / "web"
+BROWSE_ROOT = WEB.parents[2]
 if os.environ.get("AUDIO_FORGE_DESKTOP") == "1":
     BROWSE_ROOT = Path.home() / "Music"
     if not BROWSE_ROOT.is_dir():
@@ -196,12 +196,12 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authenticated():
             return
         route = urlparse(self.path).path
-        assets = {"/": ("m4a_gui.html", "text/html"), "/ui.css": ("ui.css", "text/css"),
-                  "/ui.js": ("ui.js", "text/javascript"), "/locales.json": ("locales.json", "application/json"),
-                  "/app-icon.png": ("app-icon.png", "image/png")}
+        assets = {"/": ("index.html", "text/html"), "/app.css": ("app.css", "text/css"),
+                  "/app.js": ("app.js", "text/javascript"), "/locales.json": ("locales.json", "application/json"),
+                  "/icon.png": ("icon.png", "image/png")}
         if route in assets:
             name, content_type = assets[route]
-            raw = (ROOT / name).read_bytes()
+            raw = (WEB / name).read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", content_type + ("; charset=utf-8" if content_type != "image/png" else ""))
             self.send_header("Cache-Control", "no-store")

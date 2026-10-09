@@ -4,9 +4,9 @@ from pathlib import Path
 import tempfile
 import unittest
 
-import m4a_gui as gui
-import mp4_to_m4a as media
-from test_mp4_to_m4a import checked, inspect, packet_hashes
+from audio_forge import server as gui
+from audio_forge import media
+from tests.helpers import checked, inspect, packet_hashes
 
 
 class FormatIntegrationTests(unittest.TestCase):

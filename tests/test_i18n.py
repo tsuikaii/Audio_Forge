@@ -2,9 +2,8 @@
 import re
 import unittest
 
-import messages
-from test_mp4_to_m4a import SCRIPT, checked
-import sys
+from audio_forge import i18n as messages
+from tests.helpers import CLI, checked
 
 
 class LocalizationTests(unittest.TestCase):
@@ -19,11 +18,11 @@ class LocalizationTests(unittest.TestCase):
                     self.assertEqual(set(re.findall(r"\{(\w+)\}", english)), set(re.findall(r"\{(\w+)\}", translated[key])))
 
     def test_default_and_localized_cli_help(self):
-        default = checked(sys.executable, str(SCRIPT), "--help")
+        default = checked(*CLI, "--help")
         self.assertIn("Convert MP4, MP3, FLAC", default)
         self.assertNotRegex(default, r"[\u4e00-\u9fff]")
-        chinese = checked(sys.executable, str(SCRIPT), "--language", "zh-CN", "convert", "--help")
-        japanese = checked(sys.executable, str(SCRIPT), "--language", "ja", "edit", "--help")
+        chinese = checked(*CLI, "--language", "zh-CN", "convert", "--help")
+        japanese = checked(*CLI, "--language", "ja", "edit", "--help")
         self.assertIn("目标格式", chinese)
         self.assertIn("メタデータ", japanese)
 

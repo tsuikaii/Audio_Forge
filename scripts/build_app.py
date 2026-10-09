@@ -18,11 +18,12 @@ import sys
 import sysconfig
 import tarfile
 import tempfile
+import tomllib
 
-ROOT = Path(__file__).resolve().parent
-VERSION = "1.0.0"
+ROOT = Path(__file__).resolve().parents[1]
+PACKAGE = ROOT / "src/audio_forge"
+VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
 MINIMUM_MACOS = "15.0"
-ASSETS = ("m4a_gui.py", "mp4_to_m4a.py", "messages.py", "m4a_gui.html", "ui.css", "ui.js", "locales.json", "app-icon.png")
 SYSTEM_PREFIXES = ("/usr/lib/", "/System/Library/")
 MACH_MAGICS = {b"\xcf\xfa\xed\xfe", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xfe\xed\xfa\xce", b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf"}
 # This private local-service runtime does not need TLS, databases, or a REPL.
@@ -155,7 +156,7 @@ def copy_licenses(bundler, destination):
             if path.is_file() and path.name.upper().startswith(("LICENSE", "COPYING", "COPYRIGHT", "AUTHORS")):
                 shutil.copy2(path, target / path.name)
     shutil.copy2(ROOT / "build/deps/build-info.json", destination / "media-build.json")
-    shutil.copy2(ROOT / "THIRD_PARTY_NOTICES.md", destination / "README.md")
+    shutil.copy2(ROOT / "docs/THIRD_PARTY.md", destination / "README.md")
     manifest = {"python":sys.version, "ffmpeg_version":output(media_tool("ffmpeg"), "-version"), "libraries":bundler.origins, "omitted_python_extensions":list(UNUSED_EXTENSIONS)}
     (destination / "components.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
 
@@ -172,14 +173,11 @@ def smoke_test(app):
     python = runtime / "bin/python3"
     with tempfile.TemporaryDirectory(prefix="audio-forge-smoke-") as temporary:
         folder = Path(temporary)
-        # Run the bundled application modules from a foreign working directory.
-        shutil.copy2(ROOT / "test_mp4_to_m4a.py", folder / "test_mp4_to_m4a.py")
-        for name in ("test_audio_formats.py", "test_m4a_gui.py", "test_localization.py", "test_desktop.py"):
-            shutil.copy2(ROOT / name, folder / name)
-        for name in ASSETS:
-            shutil.copy2(app / "Contents/Resources/backend" / name, folder / name)
+        # Exercise the installed package from a foreign working directory.
+        shutil.copytree(app / "Contents/Resources/backend/audio_forge", folder / "audio_forge")
+        shutil.copytree(ROOT / "tests", folder / "tests", ignore=shutil.ignore_patterns("__pycache__"))
         env["AUDIO_FORGE_DESKTOP"] = "0"
-        run(python, "-B", "-s", "-S", "-m", "unittest", "-q", "test_mp4_to_m4a.py", "test_m4a_gui.py", "test_audio_formats.py", "test_localization.py", "test_desktop.py", cwd=folder, env=env)
+        run(python, "-B", "-s", "-S", "-m", "unittest", "discover", "-s", "tests", "-t", ".", "-q", cwd=folder, env=env)
     for name in ("ffmpeg", "ffprobe"):
         run(runtime / "bin" / name, "-version", env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print("Verified: bundled Python and FFmpeg; all conversion tests pass with Homebrew absent from PATH.", flush=True)
@@ -191,9 +189,7 @@ def build_app(app, cache):
     scripts.mkdir(parents=True)
     executable = app / "Contents/MacOS/AudioForge"
     executable.parent.mkdir(parents=True)
-    for name in ASSETS:
-        if name != "app-icon.png":  # Generated with the Dock icon below.
-            shutil.copy2(ROOT / name, scripts / name)
+    shutil.copytree(PACKAGE, scripts / "audio_forge", ignore=shutil.ignore_patterns("__pycache__"))
     runtime = resources / "runtime"
     bundler = RuntimeBundler(runtime)
     print("Bundling Python standard library…", flush=True)
@@ -223,21 +219,19 @@ def build_app(app, cache):
     run("/usr/bin/xcrun", "swiftc", "-module-cache-path", cache, ROOT / "native/Icon.swift", "-o", generator)
     run(generator, iconset)
     run("/usr/bin/iconutil", "-c", "icns", iconset, "-o", resources / "AudioForge.icns")
-    shutil.copy2(iconset / "icon_512x512.png", ROOT / "app-icon.png")
-    shutil.copy2(ROOT / "app-icon.png", scripts / "app-icon.png")
+    shutil.copy2(iconset / "icon_512x512.png", PACKAGE / "web/icon.png")
+    shutil.copy2(PACKAGE / "web/icon.png", scripts / "audio_forge/web/icon.png")
     plist = dict(CFBundleIdentifier="io.github.tsuikaii.AudioForge", CFBundleName="Audio Forge", CFBundleDisplayName="Audio Forge", CFBundleExecutable="AudioForge", CFBundlePackageType="APPL", CFBundleShortVersionString=VERSION, CFBundleVersion=VERSION, CFBundleDevelopmentRegion="en", CFBundleLocalizations=["en", "zh-Hans", "ja"], CFBundleIconFile="AudioForge", LSMinimumSystemVersion=minimum, NSHighResolutionCapable=True, NSAppTransportSecurity={"NSExceptionDomains":{"127.0.0.1":{"NSExceptionAllowsInsecureHTTPLoads":True}}}, NSDownloadsFolderUsageDescription="Audio Forge opens and saves the audio files you select in Downloads.", NSDocumentsFolderUsageDescription="Audio Forge opens and saves the audio files you select in Documents.", NSDesktopFolderUsageDescription="Audio Forge opens and saves the audio files you select on Desktop.", CFBundleDocumentTypes=[{"CFBundleTypeName":"Audio and video", "CFBundleTypeRole":"Editor", "LSHandlerRank":"Alternate", "CFBundleTypeExtensions":["mp4","mp3","flac","m4a"]}])
     (app / "Contents/Info.plist").write_bytes(plistlib.dumps(plist))
     copy_licenses(bundler, resources / "ThirdParty")
     shutil.copy2(ROOT / "LICENSE", resources / "LICENSE")
-    # Include the application's editable sources alongside bundled runtime assets.
-    source_dir = resources / "Source"; source_dir.mkdir()
-    for name in ("build_gui_app.py", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "test_mp4_to_m4a.py", "test_audio_formats.py", "test_m4a_gui.py", "test_localization.py", "test_desktop.py"):
+    # Preserve the same source layout inside the editable bundle copy.
+    source_dir = resources / "Source"
+    source_dir.mkdir()
+    for name in ("README.md", "LICENSE", "pyproject.toml", "Makefile", ".gitignore", ".gitattributes", ".editorconfig"):
         shutil.copy2(ROOT / name, source_dir / name)
-    for name in ASSETS:
-        shutil.copy2(ROOT / name, source_dir / name)
-    shutil.copytree(ROOT / "native", source_dir / "native")
-    shutil.copytree(ROOT / "scripts", source_dir / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
-    shutil.copytree(ROOT / "docs", source_dir / "docs")
+    for name in ("src", "native", "scripts", "tests", "docs", ".github"):
+        shutil.copytree(ROOT / name, source_dir / name, ignore=shutil.ignore_patterns("__pycache__", "*.egg-info"))
     print(f"Signing {len(bundler.files)} bundled binaries…", flush=True)
     for binary in [*bundler.files.values(), executable]:
         run("/usr/bin/codesign", "--force", "--sign", "-", binary, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -291,7 +285,7 @@ def write_release_sources(dist):
         for path in sorted((ROOT / "build/deps/archives").iterdir()):
             if path.suffix in (".xz", ".gz"):
                 archive.add(path, arcname=path.name)
-        for path in (ROOT / "scripts/build_media.py", ROOT / "build/deps/build-info.json", ROOT / "THIRD_PARTY_NOTICES.md", ROOT / "docs/BUILDING.md"):
+        for path in (ROOT / "scripts/build_media.py", ROOT / "build/deps/build-info.json", ROOT / "docs/THIRD_PARTY.md", ROOT / "docs/BUILDING.md"):
             archive.add(path, arcname=str(path.relative_to(ROOT)) if path.is_relative_to(ROOT / "scripts") or path.is_relative_to(ROOT / "docs") else path.name)
     artifacts = [dist / f"Audio-Forge-{VERSION}-{platform.machine()}.dmg", source_archive]
     checksums = "".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n" for path in artifacts)
